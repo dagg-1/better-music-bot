@@ -7,9 +7,7 @@ const prefix = "!"
 
 let alreadyactive = {}
 
-var queue = [
-
-]
+var queue = []
 
 client.login(token.discord.bot_token)
 
@@ -79,9 +77,7 @@ client.on("message", message => {
                         name: message.author.username,
                         icon_url: message.author.avatarURL,
                     },
-                    fields: [
-
-                    ]
+                    fields: []
                 }
             }
             let posnum = 0
