@@ -1,6 +1,7 @@
 const token = require("./token.json")
 const Discord = require("discord.js")
 const youtube = require("ytdl-core")
+const searchapi = require("youtube-api-v3-search")
 
 const client = new Discord.Client()
 const prefix = "!"
@@ -29,7 +30,7 @@ client.on("guildDelete", guild => {
     queue[guild] = null
 })
 
-client.on("message", message => {
+client.on("message", async message => {
     if (!message.guild) return
     if (!message.content.startsWith(prefix)) return
     let argument = message.content.slice(prefix.length).trim().split(/ +/g)
@@ -42,7 +43,11 @@ client.on("message", message => {
         case "add":
             if (!argument[0]) return message.channel.send("No URL provided")
             if (!argument[0].includes("https://www.youtube.com/watch?v=") &&
-                !argument[0].includes("https://youtu.be/")) return message.channel.send("Invalid URL")
+                !argument[0].includes("https://youtu.be/")) {
+                    let searchcommand = argument.join().replace(/,/gi, " ")
+                    let result = await searchapi(token.youtube.api_token, {q: searchcommand, type: "video"})
+                    argument[0] = `https://youtu.be/${result.items[0].id.videoId}`
+                }
             youtube.getBasicInfo(argument[0])
                 .then(info => {
                     queue[message.member.guild].push(argument[0])
