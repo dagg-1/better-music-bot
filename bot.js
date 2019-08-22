@@ -160,7 +160,7 @@ client.on("message", async message => {
                                                         break
                                                     case "⏹":
                                                         repeat = false
-                                                        queue = []
+                                                        queue[message.member.guild] = []
                                                         alreadyactive[message.member.guild] = false
                                                         connection.disconnect()
                                                         break
