@@ -98,7 +98,7 @@ client.on("message", message => {
                 }
             }
             let posnum = 0
-            if (queue.length == 0) queueembed.embed.fields.push({ name: "Queue Empty", value: "The queue is empty, try adding something with !add"})
+            if (queue.length == 0) queueembed.embed.fields.push({ name: "Queue Empty", value: "The queue is empty, try adding something with !add" })
             queue.forEach(element => {
                 posnum++
                 queueembed.embed.fields.push({ name: `Position #${posnum}`, value: element })
@@ -109,29 +109,53 @@ client.on("message", message => {
         case "start":
             let author = message.author.id
             let dispatch
+            let playingembed
             if (alreadyactive == true) return message.channel.send("There's something already playing")
             if (queue.length == 0) return message.channel.send("There's nothing queued")
             if (!message.member.voiceChannel) return message.channel.send("You are not in a voice channel")
             if (!message.member.guild.me.hasPermission("MANAGE_MESSAGES")) return message.channel.send("I do not have message management permissions")
             if (!message.member.voiceChannel.joinable) return message.channel.send("I am not able to join this voice channel")
             alreadyactive = true
-            message.member.voiceChannel.join()
-                .then(connection => {
-                    play0()
-                    function play0() {
-                        dispatch = connection.playStream(youtube(queue[0], { highWaterMark: 32000000 }))
-                            .on("end", () => {
-                                if (queue.length > 1) {
-                                    queue.shift()
-                                    play0()
-                                }
-                                else {
-                                    queue.shift()
-                                    alreadyactive = false
-                                    connection.disconnect()
-                                }
-                            })
-                    }
+            message.channel.send("Starting")
+                .then(thismsg => {
+                    message.member.voiceChannel.join()
+                        .then(connection => {
+                            play0()
+                            function play0() {
+                                youtube.getBasicInfo(queue[0])
+                                .then(info => {
+                                    playingembed = {
+                                        embed: {
+                                            title: "Now Playing",
+                                            description: info.title,
+                                            author: {
+                                                name: info.author.name,
+                                                icon_url: info.author.avatar,
+                                                url: info.author.channel_url
+                                            },
+                                            footer: {
+                                                text: `${info.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} viiews`
+                                            },
+                                            color: 0xFF0000,
+                                            image: info.player_response.videoDetails.thumbnail.thumbnails[3]
+                                        }
+                                    }
+                                    thismsg.edit(playingembed)
+                                })
+                                dispatch = connection.playStream(youtube(queue[0], { highWaterMark: 32000000 }))
+                                    .on("end", () => {
+                                        if (queue.length > 1) {
+                                            queue.shift()
+                                            play0()
+                                        }
+                                        else {
+                                            queue.shift()
+                                            alreadyactive = false
+                                            connection.disconnect()
+                                        }
+                                    })
+                            }
+                        })
                 })
             break
     }
