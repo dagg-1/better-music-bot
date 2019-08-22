@@ -11,11 +11,13 @@ client.on("ready", () => {
 })
 
 client.on("message", message => {
-    const argument = message.content.slice(prefix.length).trim().split(/ +/g).shift()
-    switch (argument) {
+    if (!message.guild) return 
+    if (!message.content.startsWith(prefix)) return
+    let argument = message.content.slice(prefix.length).trim().split(/ +/g)
+    let command = argument.shift()
+    switch (command) {
         case "foo":
-            message.react("😃")
-            message.channel.send({
+            let fooembed = {
                 embed: {
                     title: "bar",
                     author: {
@@ -23,9 +25,19 @@ client.on("message", message => {
                         icon_url: message.author.avatarURL
                     },
                     description: "baz",
-                    color: `${Math.floor(Math.random() * 16777215) + 1}`
+                    color: `${Math.floor(Math.random() * 16777215) + 1}`,
+                    fields: [
+
+                    ]
                 }
-            })
+            }
+            message.react("😃")
+            var each = 0
+            argument.forEach(element => {
+                each++
+                fooembed.embed.fields.push({name: element, value: each})
+            });
+            message.channel.send(fooembed)
             break
     }
 })
