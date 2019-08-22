@@ -98,6 +98,7 @@ client.on("message", message => {
                 }
             }
             let posnum = 0
+            if (queue.length == 0) queueembed.embed.fields.push({ name: "Queue Empty", value: "The queue is empty, try adding something with !add"})
             queue.forEach(element => {
                 posnum++
                 queueembed.embed.fields.push({ name: `Position #${posnum}`, value: element })
@@ -125,6 +126,7 @@ client.on("message", message => {
                                     play0()
                                 }
                                 else {
+                                    queue.shift()
                                     alreadyactive = false
                                     connection.disconnect()
                                 }
