@@ -5,7 +5,7 @@ const youtube = require("ytdl-core")
 const client = new Discord.Client()
 const prefix = "!"
 
-let alreadyactive = false
+let alreadyactive = {}
 
 var queue = [
 
@@ -15,6 +15,17 @@ client.login(token.discord.bot_token)
 
 client.on("ready", () => {
     console.log(`Logged in as ${client.user.username}#${client.user.discriminator}`)
+    client.guilds.forEach(guild => {
+        alreadyactive[guild] = false
+    })
+})
+
+client.on("guildCreate", guild => {
+    alreadyactive[guild] = false
+})
+
+client.on("guildDelete", guild => {
+    alreadyactive[guild] = null
 })
 
 client.on("message", message => {
@@ -85,12 +96,12 @@ client.on("message", message => {
         case "start":
             let dispatch
             let playingembed
-            if (alreadyactive == true) return message.channel.send("There's something already playing")
+            if (alreadyactive[message.member.guild] == true) return message.channel.send("There's something already playing")
             if (queue.length == 0) return message.channel.send("There's nothing queued")
             if (!message.member.voiceChannel) return message.channel.send("You are not in a voice channel")
             if (!message.member.guild.me.hasPermission("MANAGE_MESSAGES")) return message.channel.send("I do not have message management permissions")
             if (!message.member.voiceChannel.joinable) return message.channel.send("I am not able to join this voice channel")
-            alreadyactive = true
+            alreadyactive[message.member.guild] = true
             message.channel.send("Starting")
                 .then(thismsg => {
                     message.member.voiceChannel.join()
@@ -125,7 +136,7 @@ client.on("message", message => {
                                                 }
                                                 else {
                                                     queue.shift()
-                                                    alreadyactive = false
+                                                    alreadyactive[message.member.guild] = false
                                                     connection.disconnect()
                                                 }
                                             })
@@ -139,7 +150,7 @@ client.on("message", message => {
                                                         break
                                                     case "⏹":
                                                         queue = []
-                                                        alreadyactive = false
+                                                        alreadyactive[message.member.guild] = false
                                                         connection.disconnect()
                                                         break
                                                     case "⏩":
