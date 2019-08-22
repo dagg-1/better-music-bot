@@ -24,7 +24,7 @@ client.on("message", message => {
     let command = argument.shift()
     let author = message.author.id
     const filter = (reaction, user) => {
-        return [reaction.emoji.name == "⏯", reaction.emoji.name == "⏹"] && user.id == author
+        return [reaction.emoji.name == "⏯", reaction.emoji.name == "⏹", reaction.emoji.name == "⏩"] && user.id == author
     }
     switch (command) {
         case "add":
@@ -96,9 +96,9 @@ client.on("message", message => {
                     message.member.voiceChannel.join()
                         .then(connection => {
                             play0()
-                            async function play0() {
+                            function play0() {
                                 youtube.getBasicInfo(queue[0])
-                                    .then(info => {
+                                    .then(async info => {
                                         playingembed = {
                                             embed: {
                                                 title: "Now Playing",
@@ -116,36 +116,42 @@ client.on("message", message => {
                                             }
                                         }
                                         thismsg.edit(playingembed)
+
+                                        dispatch = connection.playStream(youtube(queue[0], { highWaterMark: 32000000 }))
+                                            .on("end", () => {
+                                                if (queue.length > 1) {
+                                                    queue.shift()
+                                                    play0()
+                                                }
+                                                else {
+                                                    queue.shift()
+                                                    alreadyactive = false
+                                                    connection.disconnect()
+                                                }
+                                            })
+                                        thismsg.createReactionCollector(filter, { time: `${info.player_response.videoDetails.lengthSeconds}000` })
+                                            .on("collect", reaction => {
+                                                reaction.remove(author)
+                                                switch (reaction.emoji.name) {
+                                                    case "⏯":
+                                                        if (dispatch.paused == false) return dispatch.pause()
+                                                        dispatch.resume()
+                                                        break
+                                                    case "⏹":
+                                                        queue = []
+                                                        alreadyactive = false
+                                                        connection.disconnect()
+                                                        break
+                                                    case "⏩":
+                                                        dispatch.end()
+                                                        break
+                                                }
+                                            })
+                                        await thismsg.clearReactions()
+                                        await thismsg.react("⏯")
+                                        await thismsg.react("⏹")
+                                        await thismsg.react("⏩")
                                     })
-                                dispatch = connection.playStream(youtube(queue[0], { highWaterMark: 32000000 }))
-                                    .on("end", () => {
-                                        if (queue.length > 1) {
-                                            queue.shift()
-                                            play0()
-                                        }
-                                        else {
-                                            queue.shift()
-                                            alreadyactive = false
-                                            connection.disconnect()
-                                        }
-                                    })
-                                thismsg.createReactionCollector(filter, { time: null })
-                                    .on("collect", reaction => {
-                                        reaction.remove(author)
-                                        switch (reaction.emoji.name) {
-                                            case "⏯":
-                                                if (dispatch.paused == false) return dispatch.pause()
-                                                dispatch.resume()
-                                                break
-                                            case "⏹":
-                                                queue = []
-                                                alreadyactive = false
-                                                connection.disconnect()
-                                        }
-                                    })
-                                await thismsg.clearReactions()
-                                await thismsg.react("⏯")
-                                await thismsg.react("⏹")
                             }
                         })
                 })
