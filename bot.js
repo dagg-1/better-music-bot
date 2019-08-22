@@ -43,7 +43,7 @@ client.on("message", message => {
                 }
             }
             message.react("😃")
-            var each = 0
+            let each = 0
             argument.forEach(element => {
                 each++
                 fooembed.embed.fields.push({ name: element, value: each })
