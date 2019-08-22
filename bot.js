@@ -15,9 +15,15 @@ client.on("message", message => {
     switch (argument) {
         case "foo":
             message.react("😃")
-            message.reply({
+            message.channel.send({
                 embed: {
-                    title: "bar"
+                    title: "bar",
+                    author: {
+                        name: `${message.author.username}#${message.author.discriminator}`,
+                        icon_url: message.author.avatarURL
+                    },
+                    description: "baz",
+                    color: `${Math.floor(Math.random() * 16777215) + 1}`
                 }
             })
             break
