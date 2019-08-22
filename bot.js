@@ -119,7 +119,7 @@ client.on("message", message => {
                     function play0() {
                         dispatch = connection.playStream(youtube(queue[0], { highWaterMark: 32000000 }))
                             .on("end", () => {
-                                if (queue > 1) {
+                                if (queue.length > 1) {
                                     queue.shift()
                                     play0()
                                 }
