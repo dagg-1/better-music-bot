@@ -46,7 +46,7 @@ client.on("message", message => {
                                 url: info.author.channel_url
                             },
                             footer: {
-                                text: `${info.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} viiews`
+                                text: `${info.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} views`
                             },
                             fields: [
                                 {
@@ -109,7 +109,7 @@ client.on("message", message => {
                                                     url: info.author.channel_url
                                                 },
                                                 footer: {
-                                                    text: `${info.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} viiews`
+                                                    text: `${info.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} views`
                                                 },
                                                 color: 0xFF0000,
                                                 image: info.player_response.videoDetails.thumbnail.thumbnails[3]
