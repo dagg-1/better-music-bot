@@ -92,6 +92,7 @@ client.on("message", message => {
         case "start":
             let dispatch
             let playingembed
+            let repeat = false
             if (alreadyactive[message.member.guild] == true) return message.channel.send("There's something already playing")
             if (queue.length == 0) return message.channel.send("There's nothing queued")
             if (!message.member.voiceChannel) return message.channel.send("You are not in a voice channel")
@@ -116,7 +117,7 @@ client.on("message", message => {
                                                     url: info.author.channel_url
                                                 },
                                                 footer: {
-                                                    text: `${info.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} views`
+                                                    text: `${info.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} views | Repeat: ${repeat.toString().toUpperCase()}`
                                                 },
                                                 color: 0xFF0000,
                                                 image: info.player_response.videoDetails.thumbnail.thumbnails[3]
@@ -126,6 +127,7 @@ client.on("message", message => {
 
                                         dispatch = connection.playStream(youtube(queue[0], { highWaterMark: 32000000 }))
                                             .on("end", () => {
+                                                if (repeat == true) return play0()
                                                 if (queue.length > 1) {
                                                     queue.shift()
                                                     play0()
@@ -145,6 +147,7 @@ client.on("message", message => {
                                                         dispatch.resume()
                                                         break
                                                     case "⏹":
+                                                        repeat = false
                                                         queue = []
                                                         alreadyactive[message.member.guild] = false
                                                         connection.disconnect()
@@ -152,12 +155,18 @@ client.on("message", message => {
                                                     case "⏩":
                                                         dispatch.end()
                                                         break
+                                                    case "🔁":
+                                                        repeat = !repeat
+                                                        playingembed.embed.footer.text = `${info.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} views | Repeat: ${repeat.toString().toUpperCase()}`
+                                                        thismsg.edit(playingembed)
+                                                        break
                                                 }
                                             })
                                         await thismsg.clearReactions()
                                         await thismsg.react("⏯")
                                         await thismsg.react("⏹")
                                         await thismsg.react("⏩")
+                                        await thismsg.react("🔁")
                                     })
                             }
                         })
