@@ -1,11 +1,8 @@
 {
-  "name": "robo",
+  "name": "better-music-bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "A better music bot",
   "main": "bot.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "author": "Dagg",
   "license": "MIT",
   "dependencies": {
