@@ -1,6 +1,7 @@
 const token = require("./token.json")
 const Discord = require("discord.js")
 const youtube = require("ytdl-core")
+const searchapi = require("youtube-api-v3-search")
 
 const client = new Discord.Client()
 const prefix = "!"
@@ -8,6 +9,7 @@ const prefix = "!"
 let alreadyactive = {}
 
 var queue = {}
+var queue_title = {}
 
 client.login(token.discord.bot_token)
 
@@ -16,20 +18,23 @@ client.on("ready", () => {
     client.guilds.forEach(guild => {
         alreadyactive[guild] = false
         queue[guild] = []
+        queue_title[guild] = []
     })
 })
 
 client.on("guildCreate", guild => {
     alreadyactive[guild] = false
     queue[guild] = []
+    queue_title[guild] = []
 })
 
 client.on("guildDelete", guild => {
     alreadyactive[guild] = null
     queue[guild] = null
+    queue_title[guild] = null
 })
 
-client.on("message", message => {
+client.on("message", async message => {
     if (!message.guild) return
     if (!message.content.startsWith(prefix)) return
     let argument = message.content.slice(prefix.length).trim().split(/ +/g)
@@ -42,10 +47,15 @@ client.on("message", message => {
         case "add":
             if (!argument[0]) return message.channel.send("No URL provided")
             if (!argument[0].includes("https://www.youtube.com/watch?v=") &&
-                !argument[0].includes("https://youtu.be/")) return message.channel.send("Invalid URL")
+                !argument[0].includes("https://youtu.be/")) {
+                    let searchcommand = argument.join().replace(/,/gi, " ")
+                    let result = await searchapi(token.youtube.api_token, {q: searchcommand, type: "video"})
+                    argument[0] = `https://youtu.be/${result.items[0].id.videoId}`
+                }
             youtube.getBasicInfo(argument[0])
                 .then(info => {
                     queue[message.member.guild].push(argument[0])
+                    queue_title[message.member.guild].push(info.title)
                     message.channel.send({
                         embed: {
                             title: `Added "${info.title}" to the queue`,
@@ -87,7 +97,12 @@ client.on("message", message => {
             if (queue[message.member.guild].length == 0) queueembed.embed.fields.push({ name: "Queue Empty", value: "The queue is empty, try adding something with !add" })
             queue[message.member.guild].forEach(element => {
                 posnum++
-                queueembed.embed.fields.push({ name: `Position #${posnum}`, value: element })
+                queueembed.embed.fields.push({ name: `#${posnum} - `, value: element })
+            })
+            posnum = -1 
+            queue_title[message.member.guild].forEach(element => {
+                posnum++
+                queueembed.embed.fields[posnum] = { name: `${queueembed.embed.fields[posnum].name}${element}`, value: queueembed.embed.fields[posnum].value }
             })
             message.channel.send(queueembed)
             break
@@ -128,7 +143,7 @@ client.on("message", message => {
                                             }
                                         }
                                         if(queue[message.member.guild].length > 1) {
-                                            playingembed.embed.fields[0] = { name: "Up Next", value: queue[message.member.guild][1] }
+                                            playingembed.embed.fields[0] = { name: "Up Next", value: queue_title[message.member.guild][1] }
                                         }
                                         thismsg.edit(playingembed)
 
@@ -137,10 +152,12 @@ client.on("message", message => {
                                                 if (repeat == true) return play0()
                                                 if (queue[message.member.guild].length > 1) {
                                                     queue[message.member.guild].shift()
+                                                    queue_title[message.member.guild].shift()
                                                     play0()
                                                 }
                                                 else {
                                                     queue[message.member.guild].shift()
+                                                    queue_title[message.member.guild].shift()
                                                     alreadyactive[message.member.guild] = false
                                                     connection.disconnect()
                                                 }
@@ -155,7 +172,8 @@ client.on("message", message => {
                                                         break
                                                     case "⏹":
                                                         repeat = false
-                                                        queue = []
+                                                        queue[message.member.guild] = []
+                                                        queue_title[message.member.guild] = []
                                                         alreadyactive[message.member.guild] = false
                                                         connection.disconnect()
                                                         break
