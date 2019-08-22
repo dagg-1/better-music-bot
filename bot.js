@@ -52,6 +52,7 @@ client.on("message", message => {
             break
 
         case "add":
+            if (!argument[0]) return message.channel.send("No URL provided")
             if (!argument[0].includes("https://www.youtube.com/watch?v=") &&
                 !argument[0].includes("https://youtu.be/")) return message.channel.send("Invalid URL")
             youtube.getBasicInfo(argument[0])
