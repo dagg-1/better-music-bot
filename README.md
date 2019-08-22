@@ -5,6 +5,8 @@ A better music bot.
 - FFmpeg
 - NodeJS
 - NPM or Yarn
+- Discord Bot Token
+- YouTube Data API Token
 
 ## Configure using the included .example file.
 
