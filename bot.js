@@ -79,5 +79,26 @@ client.on("message", message => {
                     })
                 })
             break
+        case "queue":
+            let queueembed = {
+                embed: {
+                    title: "Server Queue",
+                    color: 0xFF0000,
+                    author: {
+                        name: message.author.username,
+                        icon_url: message.author.avatarURL,
+                    },
+                    fields: [
+
+                    ]
+                }
+            }
+            let posnum = 0
+            queue.forEach(element => {
+                posnum++
+                queueembed.embed.fields.push({name: `Position #${posnum}` , value: element})
+            })
+            message.channel.send(queueembed)
+            break
     }
 })
