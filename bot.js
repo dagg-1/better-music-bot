@@ -7,7 +7,7 @@ const prefix = "!"
 
 let alreadyactive = {}
 
-var queue = []
+var queue = {}
 
 client.login(token.discord.bot_token)
 
@@ -15,15 +15,18 @@ client.on("ready", () => {
     console.log(`Logged in as ${client.user.username}#${client.user.discriminator}`)
     client.guilds.forEach(guild => {
         alreadyactive[guild] = false
+        queue[guild] = []
     })
 })
 
 client.on("guildCreate", guild => {
     alreadyactive[guild] = false
+    queue[guild] = []
 })
 
 client.on("guildDelete", guild => {
     alreadyactive[guild] = null
+    queue[guild] = null
 })
 
 client.on("message", message => {
@@ -42,7 +45,7 @@ client.on("message", message => {
                 !argument[0].includes("https://youtu.be/")) return message.channel.send("Invalid URL")
             youtube.getBasicInfo(argument[0])
                 .then(info => {
-                    queue.push(argument[0])
+                    queue[message.member.guild].push(argument[0])
                     message.channel.send({
                         embed: {
                             title: `Added "${info.title}" to the queue`,
@@ -60,7 +63,7 @@ client.on("message", message => {
                             fields: [
                                 {
                                     name: "Position in Queue",
-                                    value: `#${queue.length}`
+                                    value: `#${queue[message.member.guild].length}`
                                 }
                             ]
                         }
@@ -81,8 +84,8 @@ client.on("message", message => {
                 }
             }
             let posnum = 0
-            if (queue.length == 0) queueembed.embed.fields.push({ name: "Queue Empty", value: "The queue is empty, try adding something with !add" })
-            queue.forEach(element => {
+            if (queue[message.member.guild].length == 0) queueembed.embed.fields.push({ name: "Queue Empty", value: "The queue is empty, try adding something with !add" })
+            queue[message.member.guild].forEach(element => {
                 posnum++
                 queueembed.embed.fields.push({ name: `Position #${posnum}`, value: element })
             })
@@ -94,7 +97,7 @@ client.on("message", message => {
             let playingembed
             let repeat = false
             if (alreadyactive[message.member.guild] == true) return message.channel.send("There's something already playing")
-            if (queue.length == 0) return message.channel.send("There's nothing queued")
+            if (queue[message.member.guild].length == 0) return message.channel.send("There's nothing queued")
             if (!message.member.voiceChannel) return message.channel.send("You are not in a voice channel")
             if (!message.member.guild.me.hasPermission("MANAGE_MESSAGES")) return message.channel.send("I do not have message management permissions")
             if (!message.member.voiceChannel.joinable) return message.channel.send("I am not able to join this voice channel")
@@ -105,7 +108,7 @@ client.on("message", message => {
                         .then(connection => {
                             play0()
                             function play0() {
-                                youtube.getBasicInfo(queue[0])
+                                youtube.getBasicInfo(queue[message.member.guild][0])
                                     .then(async info => {
                                         playingembed = {
                                             embed: {
@@ -120,20 +123,24 @@ client.on("message", message => {
                                                     text: `${info.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} views | Repeat: ${repeat.toString().toUpperCase()}`
                                                 },
                                                 color: 0xFF0000,
-                                                image: info.player_response.videoDetails.thumbnail.thumbnails[3]
+                                                image: info.player_response.videoDetails.thumbnail.thumbnails[3],
+                                                fields: []
                                             }
+                                        }
+                                        if(queue[message.member.guild].length > 1) {
+                                            playingembed.embed.fields[0] = { name: "Up Next", value: queue[message.member.guild][1] }
                                         }
                                         thismsg.edit(playingembed)
 
-                                        dispatch = connection.playStream(youtube(queue[0], { highWaterMark: 32000000 }))
+                                        dispatch = connection.playStream(youtube(queue[message.member.guild][0], { highWaterMark: 32000000 }))
                                             .on("end", () => {
                                                 if (repeat == true) return play0()
-                                                if (queue.length > 1) {
-                                                    queue.shift()
+                                                if (queue[message.member.guild].length > 1) {
+                                                    queue[message.member.guild].shift()
                                                     play0()
                                                 }
                                                 else {
-                                                    queue.shift()
+                                                    queue[message.member.guild].shift()
                                                     alreadyactive[message.member.guild] = false
                                                     connection.disconnect()
                                                 }
