@@ -5,6 +5,8 @@ const youtube = require("ytdl-core")
 const client = new Discord.Client()
 const prefix = "!"
 
+let alreadyactive = false
+
 var queue = [
 
 ]
@@ -79,6 +81,7 @@ client.on("message", message => {
                     })
                 })
             break
+
         case "queue":
             let queueembed = {
                 embed: {
@@ -96,9 +99,37 @@ client.on("message", message => {
             let posnum = 0
             queue.forEach(element => {
                 posnum++
-                queueembed.embed.fields.push({name: `Position #${posnum}` , value: element})
+                queueembed.embed.fields.push({ name: `Position #${posnum}`, value: element })
             })
             message.channel.send(queueembed)
+            break
+
+        case "start":
+            let author = message.author.id
+            let dispatch
+            if (alreadyactive == true) return message.channel.send("There's something already playing")
+            if (queue.length == 0) return message.channel.send("There's nothing queued")
+            if (!message.member.voiceChannel) return message.channel.send("You are not in a voice channel")
+            if (!message.member.guild.me.hasPermission("MANAGE_MESSAGES")) return message.channel.send("I do not have message management permissions")
+            if (!message.member.voiceChannel.joinable) return message.channel.send("I am not able to join this voice channel")
+            alreadyactive = true
+            message.member.voiceChannel.join()
+                .then(connection => {
+                    play0()
+                    function play0() {
+                        dispatch = connection.playStream(youtube(queue[0], { highWaterMark: 32000000 }))
+                            .on("end", () => {
+                                if (queue > 1) {
+                                    queue.shift()
+                                    play0()
+                                }
+                                else {
+                                    alreadyactive = false
+                                    connection.disconnect()
+                                }
+                            })
+                    }
+                })
             break
     }
 })
