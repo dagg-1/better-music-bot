@@ -24,7 +24,7 @@ client.on("message", message => {
     let command = argument.shift()
     let author = message.author.id
     const filter = (reaction, user) => {
-        return [reaction.emoji.name == "⏯"] && user.id == author
+        return [reaction.emoji.name == "⏯", reaction.emoji.name == "⏹"] && user.id == author
     }
     switch (command) {
         case "add":
@@ -92,11 +92,11 @@ client.on("message", message => {
             if (!message.member.voiceChannel.joinable) return message.channel.send("I am not able to join this voice channel")
             alreadyactive = true
             message.channel.send("Starting")
-                .then(async thismsg => {
+                .then(thismsg => {
                     message.member.voiceChannel.join()
                         .then(connection => {
                             play0()
-                            function play0() {
+                            async function play0() {
                                 youtube.getBasicInfo(queue[0])
                                     .then(info => {
                                         playingembed = {
@@ -137,12 +137,17 @@ client.on("message", message => {
                                                 if (dispatch.paused == false) return dispatch.pause()
                                                 dispatch.resume()
                                                 break
+                                            case "⏹":
+                                                queue = []
+                                                alreadyactive = false
+                                                connection.disconnect()
                                         }
                                     })
+                                await thismsg.clearReactions()
+                                await thismsg.react("⏯")
+                                await thismsg.react("⏹")
                             }
                         })
-
-                    await thismsg.react("⏯")
                 })
             break
     }
