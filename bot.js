@@ -197,5 +197,11 @@ client.on("message", async message => {
                         })
                 })
             break
+
+            case "clear":
+                queue[message.member.guild] = []
+                queue_title[message.member.guild] = []
+                message.channel.send("Cleared the queue")
+                break
     }
 })
