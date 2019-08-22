@@ -11,10 +11,6 @@ var queue = [
 
 ]
 
-function getColour() {
-    return Math.floor(Math.random() * 16777215) + 1
-}
-
 client.login(token.discord.bot_token)
 
 client.on("ready", () => {
@@ -27,30 +23,6 @@ client.on("message", message => {
     let argument = message.content.slice(prefix.length).trim().split(/ +/g)
     let command = argument.shift()
     switch (command) {
-        case "foo":
-            let fooembed = {
-                embed: {
-                    title: "bar",
-                    author: {
-                        name: `${message.author.username}#${message.author.discriminator}`,
-                        icon_url: message.author.avatarURL
-                    },
-                    description: "baz",
-                    color: `${getColour()}`,
-                    fields: [
-
-                    ]
-                }
-            }
-            message.react("😃")
-            let each = 0
-            argument.forEach(element => {
-                each++
-                fooembed.embed.fields.push({ name: element, value: each })
-            });
-            message.channel.send(fooembed)
-            break
-
         case "add":
             if (!argument[0]) return message.channel.send("No URL provided")
             if (!argument[0].includes("https://www.youtube.com/watch?v=") &&
