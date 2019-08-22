@@ -9,6 +9,10 @@ var queue = [
 
 ]
 
+function getColour() {
+    return Math.floor(Math.random() * 16777215) + 1
+}
+
 client.login(token.discord.bot_token)
 
 client.on("ready", () => {
@@ -30,7 +34,7 @@ client.on("message", message => {
                         icon_url: message.author.avatarURL
                     },
                     description: "baz",
-                    color: `${Math.floor(Math.random() * 16777215) + 1}`,
+                    color: `${getColour()}`,
                     fields: [
 
                     ]
@@ -51,10 +55,29 @@ client.on("message", message => {
             youtube.getBasicInfo(argument[0])
                 .then(info => {
                     queue.push(argument[0])
-                    console.log(info)
-                    //message.channel.send()
+                    message.channel.send({
+                        embed: {
+                            title: `Added "${info.title}" to the queue`,
+                            description: `URL: ${info.video_url}`,
+                            color: 0xFF0000,
+                            image: info.player_response.videoDetails.thumbnail.thumbnails[3],
+                            author: {
+                                name: info.author.name,
+                                icon_url: info.author.avatar,
+                                url: info.author.channel_url
+                            },
+                            footer: {
+                                text: `${info.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} viiews`
+                            },
+                            fields: [
+                                {
+                                    name: "Position in Queue",
+                                    value: `#${queue.length}`
+                                }
+                            ]
+                        }
+                    })
                 })
-                .catch(error => message.channel.send(error))
             break
     }
 })
