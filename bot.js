@@ -50,6 +50,7 @@ client.on("message", async message => {
                 !argument[0].includes("https://youtu.be/")) {
                     let searchcommand = argument.join().replace(/,/gi, " ")
                     let result = await searchapi(token.youtube.api_token, {q: searchcommand, type: "video"})
+                    if (!result.items[0]) return message.channel.send(`No results for "${searchcommand}"`)
                     argument[0] = `https://youtu.be/${result.items[0].id.videoId}`
                 }
             youtube.getBasicInfo(argument[0])
