@@ -10,9 +10,6 @@ let alreadyactive = {}
 
 var queue = {}
 var queue_title = {}
-var playingembed = {}
-var repeat = false
-var dispatch
 
 client.login(token.discord.bot_token)
 
@@ -126,7 +123,8 @@ client.on("message", async message => {
             break
 
         case "start":
-            repeat = false
+            let repeat = false
+            let dispatch
             if (alreadyactive[message.member.guild] == true) return message.channel.send("There's something already playing")
             if (queue[message.member.guild].length == 0) return message.channel.send("There's nothing queued")
             if (!message.member.voiceChannel) return message.channel.send("You are not in a voice channel")
@@ -141,7 +139,7 @@ client.on("message", async message => {
                             function play0() {
                                 youtube.getBasicInfo(queue[message.member.guild][0])
                                     .then(async info => {
-                                        playingembed = {
+                                        let playingembed = {
                                             embed: {
                                                 title: "Now Playing",
                                                 description: info.title,
