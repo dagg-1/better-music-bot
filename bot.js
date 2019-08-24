@@ -48,7 +48,7 @@ client.on("message", async message => {
     }
     switch (command) {
         case "add":
-            if (!argument[0]) return message.channel.send("No URL provided")
+            if (!argument[0]) return message.channel.send("No URL/Search Term provided")
             if (!argument[0].includes("https://www.youtube.com/watch?v=") &&
                 !argument[0].includes("https://youtu.be/")) {
                 let searchcommand = argument.join().replace(/,/gi, " ")
