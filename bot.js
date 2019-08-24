@@ -11,8 +11,6 @@ let alreadyactive = {}
 var queue = {}
 var queue_title = {}
 var playingembed = {}
-
-var currinfo = {}
 var repeat = false
 var dispatch
 
@@ -88,29 +86,7 @@ client.on("message", async message => {
             break
 
         case "queue":
-            let queueembed = {
-                embed: {
-                    title: "Server Queue",
-                    color: 0xFF0000,
-                    author: {
-                        name: message.author.username,
-                        icon_url: message.author.avatarURL,
-                    },
-                    fields: []
-                }
-            }
-            let posnum = 0
-            if (queue[message.member.guild].length == 0) queueembed.embed.fields.push({ name: "Queue Empty", value: "The queue is empty, try adding something with !add" })
-            queue[message.member.guild].forEach(element => {
-                posnum++
-                queueembed.embed.fields.push({ name: `#${posnum} - `, value: element })
-            })
-            posnum = -1
-            queue_title[message.member.guild].forEach(element => {
-                posnum++
-                queueembed.embed.fields[posnum] = { name: `${queueembed.embed.fields[posnum].name}${element}`, value: queueembed.embed.fields[posnum].value }
-            })
-            message.channel.send(queueembed)
+            getqueue(message)
             break
 
         case "start":
@@ -210,50 +186,37 @@ client.on("message", async message => {
             break
 
         case "remove":
-            message.channel.send("Coming soon")
-            break
-
-        case "np":
-            if (!alreadyactive[message.member.guild]) return message.channel.send("Nothing is currently playing")
-            if (queue[message.member.guild].length > 1) {
-                playingembed.embed.fields[0] = { name: "Up Next", value: queue_title[message.member.guild][1] }
-            }
-            message.channel.send(playingembed)
-                .then(async message => {
-                    message.createReactionCollector(filter, { time: `${currinfo.player_response.videoDetails.lengthSeconds}000` })
-                        .on("collect", reaction => {
-                            reaction.remove(author)
-                            switch (reaction.emoji.name) {
-                                case "⏯":
-                                    if (dispatch.paused == false) return dispatch.pause()
-                                    dispatch.resume()
-                                    break
-                                case "⏹":
-                                    repeat = false
-                                    queue[message.member.guild] = []
-                                    queue_title[message.member.guild] = []
-                                    alreadyactive[message.member.guild] = false
-                                    connection.disconnect()
-                                    break
-                                case "⏩":
-                                    dispatch.end()
-                                    break
-                                case "🔁":
-                                    repeat = !repeat
-                                    playingembed.embed.footer.text = `${currinfo.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} views | Repeat: ${repeat.toString().toUpperCase()}`
-                                    thismsg.edit(playingembed)
-                                    break
-                            }
-                        })
-                    await message.react("⏯")
-                    await message.react("⏹")
-                    await message.react("⏩")
-                    await message.react("🔁")
-                })
-            break
-
-        case "volume":
-            message.channel.send("Coming soon")
+            if(!argument[0]) return message.channel.send("You did not specify a position to remove!")
+            if(argument[0].length > queue[message.member.guild].length || argument[0] < 2) return message.channel.send("Invalid position")
+            queue[message.member.guild].splice(argument[0] - 1 , 1)
+            queue_title[message.member.guild].splice(argument[0] - 1, 1)
+            getqueue(message)
             break
     }
 })
+
+function getqueue(message) {
+    queueembed = {
+        embed: {
+            title: "Server Queue",
+            color: 0xFF0000,
+            author: {
+                name: message.author.username,
+                icon_url: message.author.avatarURL,
+            },
+            fields: []
+        }
+    }
+    let posnum = 0
+    if (queue[message.member.guild].length == 0) queueembed.embed.fields.push({ name: "Queue Empty", value: "The queue is empty, try adding something with !add" })
+    queue[message.member.guild].forEach(element => {
+        posnum++
+        queueembed.embed.fields.push({ name: `#${posnum} - `, value: element })
+    })
+    posnum = -1
+    queue_title[message.member.guild].forEach(element => {
+        posnum++
+        queueembed.embed.fields[posnum] = { name: `${queueembed.embed.fields[posnum].name}${element}`, value: queueembed.embed.fields[posnum].value }
+    })
+    message.channel.send(queueembed)
+}
