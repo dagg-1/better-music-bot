@@ -47,6 +47,42 @@ client.on("message", async message => {
         return [reaction.emoji.name == "⏯", reaction.emoji.name == "⏹", reaction.emoji.name == "⏩"] && user.id == author
     }
     switch (command) {
+        case "help":
+            message.channel.send({
+                embed: {
+                    title: "Better Music Bot",
+                    description: "A better music bot for discord",
+                    color: `${getrole(message)}`,
+                    author: {
+                        name: message.author.username,
+                        icon_url: message.author.avatarURL
+                    },
+                    fields: [
+                        {
+                            name: "!start",
+                            value: "Starts the music"
+                        },
+                        {
+                            name: "!add [URL/SEARCH]",
+                            value: "Searches and adds to the queue"
+                        },
+                        {
+                            name: "!queue",
+                            value: "Shows the queue"
+                        },
+                        {
+                            name: "!clear",
+                            value: "Clears the queue"
+                        },
+                        {
+                            name: "!remove [POSITION]",
+                            value: "Removes a queue entry"
+                        }
+                    ]
+                }
+            })
+            break
+
         case "add":
             if (!argument[0]) return message.channel.send("No URL/Search Term provided")
             if (!argument[0].includes("https://www.youtube.com/watch?v=") &&
@@ -194,6 +230,11 @@ client.on("message", async message => {
             break
     }
 })
+
+function getrole(message) {
+    if(!message.member.guild.me.colorRole) return 0xD4D4D4
+    return message.member.guild.me.colorRole.color
+}
 
 function getqueue(message) {
     queueembed = {
