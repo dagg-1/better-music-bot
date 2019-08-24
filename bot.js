@@ -10,6 +10,11 @@ let alreadyactive = {}
 
 var queue = {}
 var queue_title = {}
+var playingembed = {}
+
+var currinfo = {}
+var repeat = false
+var dispatch
 
 client.login(token.discord.bot_token)
 
@@ -48,11 +53,11 @@ client.on("message", async message => {
             if (!argument[0]) return message.channel.send("No URL provided")
             if (!argument[0].includes("https://www.youtube.com/watch?v=") &&
                 !argument[0].includes("https://youtu.be/")) {
-                    let searchcommand = argument.join().replace(/,/gi, " ")
-                    let result = await searchapi(token.youtube.api_token, {q: searchcommand, type: "video"})
-                    if (!result.items[0]) return message.channel.send(`No results for "${searchcommand}"`)
-                    argument[0] = `https://youtu.be/${result.items[0].id.videoId}`
-                }
+                let searchcommand = argument.join().replace(/,/gi, " ")
+                let result = await searchapi(token.youtube.api_token, { q: searchcommand, type: "video" })
+                if (!result.items[0]) return message.channel.send(`No results for "${searchcommand}"`)
+                argument[0] = `https://youtu.be/${result.items[0].id.videoId}`
+            }
             youtube.getBasicInfo(argument[0])
                 .then(info => {
                     queue[message.member.guild].push(argument[0])
@@ -100,7 +105,7 @@ client.on("message", async message => {
                 posnum++
                 queueembed.embed.fields.push({ name: `#${posnum} - `, value: element })
             })
-            posnum = -1 
+            posnum = -1
             queue_title[message.member.guild].forEach(element => {
                 posnum++
                 queueembed.embed.fields[posnum] = { name: `${queueembed.embed.fields[posnum].name}${element}`, value: queueembed.embed.fields[posnum].value }
@@ -109,9 +114,7 @@ client.on("message", async message => {
             break
 
         case "start":
-            let dispatch
-            let playingembed
-            let repeat = false
+            repeat = false
             if (alreadyactive[message.member.guild] == true) return message.channel.send("There's something already playing")
             if (queue[message.member.guild].length == 0) return message.channel.send("There's nothing queued")
             if (!message.member.voiceChannel) return message.channel.send("You are not in a voice channel")
@@ -143,7 +146,8 @@ client.on("message", async message => {
                                                 fields: []
                                             }
                                         }
-                                        if(queue[message.member.guild].length > 1) {
+                                        currinfo = info
+                                        if (queue[message.member.guild].length > 1) {
                                             playingembed.embed.fields[0] = { name: "Up Next", value: queue_title[message.member.guild][1] }
                                         }
                                         thismsg.edit(playingembed)
@@ -199,10 +203,57 @@ client.on("message", async message => {
                 })
             break
 
-            case "clear":
-                queue[message.member.guild] = []
-                queue_title[message.member.guild] = []
-                message.channel.send("Cleared the queue")
-                break
+        case "clear":
+            queue[message.member.guild] = []
+            queue_title[message.member.guild] = []
+            message.channel.send("Cleared the queue")
+            break
+
+        case "remove":
+            message.channel.send("Coming soon")
+            break
+
+        case "np":
+            if (!alreadyactive[message.member.guild]) return message.channel.send("Nothing is currently playing")
+            if (queue[message.member.guild].length > 1) {
+                playingembed.embed.fields[0] = { name: "Up Next", value: queue_title[message.member.guild][1] }
+            }
+            message.channel.send(playingembed)
+                .then(async message => {
+                    message.createReactionCollector(filter, { time: `${currinfo.player_response.videoDetails.lengthSeconds}000` })
+                        .on("collect", reaction => {
+                            reaction.remove(author)
+                            switch (reaction.emoji.name) {
+                                case "⏯":
+                                    if (dispatch.paused == false) return dispatch.pause()
+                                    dispatch.resume()
+                                    break
+                                case "⏹":
+                                    repeat = false
+                                    queue[message.member.guild] = []
+                                    queue_title[message.member.guild] = []
+                                    alreadyactive[message.member.guild] = false
+                                    connection.disconnect()
+                                    break
+                                case "⏩":
+                                    dispatch.end()
+                                    break
+                                case "🔁":
+                                    repeat = !repeat
+                                    playingembed.embed.footer.text = `${currinfo.player_response.videoDetails.viewCount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")} views | Repeat: ${repeat.toString().toUpperCase()}`
+                                    thismsg.edit(playingembed)
+                                    break
+                            }
+                        })
+                    await message.react("⏯")
+                    await message.react("⏹")
+                    await message.react("⏩")
+                    await message.react("🔁")
+                })
+            break
+
+        case "volume":
+            message.channel.send("Coming soon")
+            break
     }
 })
