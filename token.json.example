@@ -1,5 +1,8 @@
 {
     "discord": {
-        "bot_token": "fill"
+        "bot_token": "BOT-TOKEN"
+    },
+    "youtube": {
+        "api_token": "API-TOKEN"
     }
 }
